@@ -59,7 +59,10 @@ pub struct RouteV4Key(Ipv4Addr);
 #[derive(Copy, Clone)]
 pub struct RouteV6Key(Ipv6Addr);
 
+#[derive(Copy, Clone)]
 pub struct RouteV4Source(Ipv4Addr);
+
+#[derive(Copy, Clone)]
 pub struct RouteV6Source(Ipv6Addr);
 
 impl Route {
@@ -133,26 +136,6 @@ impl RouteV6Destination {
     }
 }
 
-impl RouteV4Source {
-    pub fn as_ipv4(&self) -> Ipv4Addr {
-        self.0
-    }
-
-    pub fn new(source: Ipv4Addr) -> Self {
-        Self(source)
-    }
-}
-
-impl RouteV6Source {
-    pub fn as_ipv6(&self) -> Ipv6Addr {
-        self.0
-    }
-
-    pub fn new(source: Ipv6Addr) -> Self {
-        Self(source)
-    }
-}
-
 impl RouteV4Key {
     pub fn as_ipv4(&self) -> Ipv4Addr {
         self.0
@@ -170,6 +153,26 @@ impl RouteV6Key {
 
     pub fn new(key: Ipv6Addr) -> Self {
         Self(key)
+    }
+}
+
+impl RouteV4Source {
+    pub fn as_ipv4(&self) -> Ipv4Addr {
+        self.0
+    }
+
+    pub fn new(source: Ipv4Addr) -> Self {
+        Self(source)
+    }
+}
+
+impl RouteV6Source {
+    pub fn as_ipv6(&self) -> Ipv6Addr {
+        self.0
+    }
+
+    pub fn new(source: Ipv6Addr) -> Self {
+        Self(source)
     }
 }
 

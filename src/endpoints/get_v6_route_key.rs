@@ -4,7 +4,7 @@ use crate::{
         operations::{MissingV6KeyFragment, RestoreRouteOperation, RouteFragment},
     },
     endpoints::{EndpointError, EndpointResult},
-    solutions::InMemoryNetwork,
+    solutions::BasicMathService,
 };
 use axum::extract::Query;
 use serde::Deserialize;
@@ -36,7 +36,7 @@ pub async fn get_v6_route_key(
     })?;
 
     let route = RestoreRouteOperation {
-        network_service: InMemoryNetwork {},
+        math: &BasicMathService {},
     }
     .execute(RouteFragment::Missingv6Key(MissingV6KeyFragment {
         destination: RouteV6Destination::new(destination),

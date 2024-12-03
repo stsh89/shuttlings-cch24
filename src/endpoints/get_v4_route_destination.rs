@@ -4,7 +4,7 @@ use crate::{
         operations::{MissingV4DestinationFragment, RestoreRouteOperation, RouteFragment},
     },
     endpoints::{EndpointError, EndpointResult},
-    solutions::InMemoryNetwork,
+    solutions::BasicMathService,
 };
 use axum::extract::Query;
 use serde::Deserialize;
@@ -36,7 +36,7 @@ pub async fn get_v4_route_destination(
     })?;
 
     let route = RestoreRouteOperation {
-        network_service: InMemoryNetwork {},
+        math: &BasicMathService {},
     }
     .execute(RouteFragment::MissingV4Destination(
         MissingV4DestinationFragment {

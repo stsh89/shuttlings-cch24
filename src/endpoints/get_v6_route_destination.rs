@@ -4,7 +4,7 @@ use crate::{
         operations::{MissingV6DestinationFragment, RestoreRouteOperation, RouteFragment},
     },
     endpoints::{EndpointError, EndpointResult},
-    solutions::InMemoryNetwork,
+    solutions::BasicMathService,
 };
 use axum::extract::Query;
 use serde::Deserialize;
@@ -23,7 +23,7 @@ pub async fn get_v6_route_destination(
 
     let source: Ipv6Addr = from.parse().map_err(EndpointError::from).map_err(|err| {
         err.wrap_err(format!(
-            "Incorrect query parameter: from. Expected valid IPv6network address, got: {}",
+            "Incorrect query parameter: from. Expected valid IPv6 network address, got: {}",
             from
         ))
     })?;
@@ -36,7 +36,7 @@ pub async fn get_v6_route_destination(
     })?;
 
     let route = RestoreRouteOperation {
-        network_service: InMemoryNetwork {},
+        math: &BasicMathService {},
     }
     .execute(RouteFragment::MissingV6Destination(
         MissingV6DestinationFragment {

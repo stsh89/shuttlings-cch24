@@ -1,9 +1,9 @@
 use crate::core::{
     definitions::{
-        Route, RouteV4Destination, RouteV4Key, RouteV4Source, RouteV6Destination, RouteV6Key,
-        RouteV6Source,
+        Route, RouteParameters, RouteV4Destination, RouteV4Key, RouteV4Parameters, RouteV4Source,
+        RouteV6Destination, RouteV6Key, RouteV6Parameters, RouteV6Source,
     },
-    services::{NetworkService, RestoreRoute},
+    services::{AddWithOverflow, MathService, SubWithOverflow, Xor},
 };
 
 /// # Operation description
@@ -45,11 +45,11 @@ use crate::core::{
 /// addition.
 ///
 /// See [challenge page](https://console.shuttle.dev/shuttlings/cch24/challenge/2) for details.
-pub struct RestoreRouteOperation<T>
+pub struct RestoreRouteOperation<'a, T>
 where
-    T: NetworkService,
+    T: MathService,
 {
-    pub network_service: T,
+    pub math: &'a T,
 }
 
 pub enum RouteFragment {
@@ -79,11 +79,144 @@ pub struct MissingV6KeyFragment {
     pub source: RouteV6Source,
 }
 
-impl<T> RestoreRouteOperation<T>
+impl<'a, T> RestoreRouteOperation<'a, T>
 where
-    T: RestoreRoute,
+    T: AddWithOverflow + SubWithOverflow + Xor,
 {
     pub fn execute(&self, fragment: RouteFragment) -> Route {
-        self.network_service.restore_route(fragment)
+        use RouteFragment as RF;
+
+        match fragment {
+            RF::MissingV4Destination(fragment) => self.missing_v4_destination(fragment),
+            RF::Missingv4Key(fragment) => self.missing_v4_key(fragment),
+            RF::MissingV6Destination(fragment) => self.missing_v6_destination(fragment),
+            RF::Missingv6Key(fragment) => self.missing_v6_key(fragment),
+        }
+    }
+
+    fn calculate_v4_key(
+        &self,
+        source: RouteV4Source,
+        destination: RouteV4Destination,
+    ) -> RouteV4Key {
+        let octets: [u8; 4] = destination
+            .as_ipv4()
+            .octets()
+            .into_iter()
+            .zip(source.as_ipv4().octets())
+            .map(|(a, b)| self.math.sub_with_overflow(a, b))
+            .collect::<Vec<u8>>()
+            .try_into()
+            .unwrap();
+
+        RouteV4Key::new(octets.into())
+    }
+
+    fn calculate_v4_destination(
+        &self,
+        source: RouteV4Source,
+        key: RouteV4Key,
+    ) -> RouteV4Destination {
+        let octets: [u8; 4] = source
+            .as_ipv4()
+            .octets()
+            .into_iter()
+            .zip(key.as_ipv4().octets())
+            .map(|(a, b)| self.math.add_with_overflow(a, b))
+            .collect::<Vec<u8>>()
+            .try_into()
+            .unwrap();
+
+        RouteV4Destination::new(octets.into())
+    }
+
+    fn calculate_v6_key(
+        &self,
+        source: RouteV6Source,
+        destination: RouteV6Destination,
+    ) -> RouteV6Key {
+        let octets: [u8; 16] = destination
+            .as_ipv6()
+            .octets()
+            .into_iter()
+            .zip(source.as_ipv6().octets())
+            .map(|(a, b)| self.math.xor(a, b))
+            .collect::<Vec<u8>>()
+            .try_into()
+            .unwrap();
+
+        RouteV6Key::new(octets.into())
+    }
+
+    fn calculate_v6_destination(
+        &self,
+        source: RouteV6Source,
+        key: RouteV6Key,
+    ) -> RouteV6Destination {
+        let octets: [u8; 16] = source
+            .as_ipv6()
+            .octets()
+            .into_iter()
+            .zip(key.as_ipv6().octets())
+            .map(|(a, b)| self.math.xor(a, b))
+            .collect::<Vec<u8>>()
+            .try_into()
+            .unwrap();
+
+        RouteV6Destination::new(octets.into())
+    }
+
+    fn missing_v4_destination(&self, fragment: MissingV4DestinationFragment) -> Route {
+        let MissingV4DestinationFragment { key, source } = fragment;
+
+        let destination = self.calculate_v4_destination(source, key);
+
+        Route::new(RouteParameters::V4(RouteV4Parameters {
+            destination,
+            key,
+            source,
+        }))
+    }
+
+    fn missing_v6_destination(&self, fragment: MissingV6DestinationFragment) -> Route {
+        let MissingV6DestinationFragment { key, source } = fragment;
+
+        let destination = self.calculate_v6_destination(source, key);
+
+        Route::new(RouteParameters::V6(RouteV6Parameters {
+            destination,
+            key,
+            source,
+        }))
+    }
+
+    fn missing_v4_key(&self, fragment: MissingV4KeyFragment) -> Route {
+        let MissingV4KeyFragment {
+            source,
+            destination,
+        } = fragment;
+
+        let key = self.calculate_v4_key(source, destination);
+
+        Route::new(RouteParameters::V4(RouteV4Parameters {
+            destination,
+            key,
+            source,
+        }))
+    }
+
+    fn missing_v6_key(&self, fragment: MissingV6KeyFragment) -> Route {
+        let MissingV6KeyFragment {
+            source,
+            destination,
+        } = fragment;
+
+        let key = self.calculate_v6_key(source, destination);
+
+        Route::new(RouteParameters::V6(RouteV6Parameters {
+            destination,
+            key,
+            source,
+        }))
     }
 }

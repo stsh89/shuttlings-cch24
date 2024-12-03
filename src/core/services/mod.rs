@@ -1,3 +1,3 @@
-mod network;
+mod math;
 
-pub use network::*;
+pub use math::*;
