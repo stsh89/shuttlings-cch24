@@ -4,7 +4,9 @@ use std::{
 };
 
 pub struct Route {
+    #[allow(dead_code)]
     source: RouteSource,
+
     key: RouteKey,
     destination: RouteDestination,
 }
@@ -22,13 +24,18 @@ pub enum RouteFragment {
 #[derive(Copy, Clone)]
 pub struct RouteDestination(Ipv4Addr);
 
-struct RouteKey(Ipv4Addr);
+#[derive(Copy, Clone)]
+pub struct RouteKey(Ipv4Addr);
 
 struct RouteSource(Ipv4Addr);
 
 impl Route {
     pub fn destination(&self) -> RouteDestination {
         self.destination
+    }
+
+    pub fn key(&self) -> RouteKey {
+        self.key
     }
 
     pub fn new(parameters: RouteParameters) -> Route {
@@ -67,11 +74,19 @@ impl RouteSource {
     }
 
     fn key(&self, destination: &RouteDestination) -> RouteKey {
-        todo!()
+        let address = sub_address(destination.0, self.0);
+
+        RouteKey(address)
     }
 }
 
 impl Display for RouteDestination {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl Display for RouteKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
@@ -86,6 +101,18 @@ fn add_addresses(a: Ipv4Addr, b: Ipv4Addr) -> Ipv4Addr {
         a[1].wrapping_add(b[1]),
         a[2].wrapping_add(b[2]),
         a[3].wrapping_add(b[3]),
+    )
+}
+
+fn sub_address(a: Ipv4Addr, b: Ipv4Addr) -> Ipv4Addr {
+    let a = a.octets();
+    let b = b.octets();
+
+    Ipv4Addr::new(
+        a[0].wrapping_sub(b[0]),
+        a[1].wrapping_sub(b[1]),
+        a[2].wrapping_sub(b[2]),
+        a[3].wrapping_sub(b[3]),
     )
 }
 
@@ -129,6 +156,46 @@ mod tests {
                 destination.0, expected_destination,
                 "{} + {}, expected: {}, got: {}",
                 source.0, key.0, expected_destination, destination.0
+            );
+        }
+    }
+
+    #[test]
+    fn test_key_math() {
+        struct TestData {
+            source: Ipv4Addr,
+            destination: Ipv4Addr,
+            expected_key: Ipv4Addr,
+        }
+
+        let test_data = vec![
+            TestData {
+                source: Ipv4Addr::new(10, 0, 0, 0),
+                destination: Ipv4Addr::new(11, 2, 3, 255),
+                expected_key: Ipv4Addr::new(1, 2, 3, 255),
+            },
+            TestData {
+                source: Ipv4Addr::new(128, 128, 33, 0),
+                destination: Ipv4Addr::new(127, 128, 32, 33),
+                expected_key: Ipv4Addr::new(255, 0, 255, 33),
+            },
+        ];
+
+        for data in test_data {
+            let TestData {
+                source,
+                destination,
+                expected_key,
+            } = data;
+
+            let source = RouteSource(source);
+            let destination = RouteDestination(destination);
+            let key = source.key(&destination);
+
+            assert_eq!(
+                key.0, expected_key,
+                "{} - {}, expected: {}, got: {}",
+                source.0, destination.0, expected_key, key.0
             );
         }
     }

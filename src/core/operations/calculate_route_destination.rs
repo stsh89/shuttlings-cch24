@@ -27,14 +27,14 @@ use std::net::Ipv4Addr;
 ///     128.128.33.0 + 255.0.255.33 = 127.128.32.33
 ///
 /// See [challenge page](https://console.shuttle.dev/shuttlings/cch24/challenge/2) for details.
-pub struct CalculateRouteDestination {}
+pub struct CalculateRouteDestinationOperation {}
 
 pub struct CalculateRouteDestinationParameters {
     pub source: Ipv4Addr,
     pub key: Ipv4Addr,
 }
 
-impl CalculateRouteDestination {
+impl CalculateRouteDestinationOperation {
     pub fn execute(&self, parameters: CalculateRouteDestinationParameters) -> Route {
         let CalculateRouteDestinationParameters { source, key } = parameters;
 
