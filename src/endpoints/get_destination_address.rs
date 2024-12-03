@@ -1,7 +1,5 @@
 use crate::{
-    core::operations::{
-        CalculateDestinationAddressOperation, CalculateDestinationAddressParameters,
-    },
+    core::operations::{CalculateRouteDestination, CalculateRouteDestinationParameters},
     endpoints::{EndpointError, EndpointResult},
 };
 use axum::extract::Query;
@@ -32,8 +30,8 @@ pub async fn get_destination_address(
         ))
     })?;
 
-    let route = CalculateDestinationAddressOperation {}
-        .execute(CalculateDestinationAddressParameters { source, key });
+    let route =
+        CalculateRouteDestination {}.execute(CalculateRouteDestinationParameters { source, key });
 
     let body = format!("{}", route.destination());
 
