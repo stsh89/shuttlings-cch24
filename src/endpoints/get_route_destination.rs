@@ -1,9 +1,14 @@
 use crate::{
-    core::operations::{CalculateRouteDestinationOperation, CalculateRouteDestinationParameters},
+    core::{
+        definitions::{RouteV4Key, RouteV4Source},
+        operations::{MissingV4DestinationFragment, RestoreRouteOperation, RouteFragment},
+    },
     endpoints::{EndpointError, EndpointResult},
+    solutions::InMemoryNetwork,
 };
 use axum::extract::Query;
 use serde::Deserialize;
+use std::net::Ipv4Addr;
 
 #[derive(Deserialize)]
 pub struct GetDestinationAddressQueryParameters {
@@ -16,22 +21,29 @@ pub async fn get_route_destination(
 ) -> EndpointResult<String> {
     let GetDestinationAddressQueryParameters { from, key } = query.0;
 
-    let source = from.parse().map_err(EndpointError::from).map_err(|err| {
+    let source: Ipv4Addr = from.parse().map_err(EndpointError::from).map_err(|err| {
         err.wrap_err(format!(
             "Incorrect query parameter: from. Expected valid network address, got: {}",
             from
         ))
     })?;
 
-    let key = key.parse().map_err(EndpointError::from).map_err(|err| {
+    let key: Ipv4Addr = key.parse().map_err(EndpointError::from).map_err(|err| {
         err.wrap_err(format!(
             "Incorrect query parameter: key. Expected valid network address, got: {}",
             key
         ))
     })?;
 
-    let route = CalculateRouteDestinationOperation {}
-        .execute(CalculateRouteDestinationParameters { source, key });
+    let route = RestoreRouteOperation {
+        network_service: InMemoryNetwork {},
+    }
+    .execute(RouteFragment::MissingV4Destination(
+        MissingV4DestinationFragment {
+            key: RouteV4Key::new(key),
+            source: RouteV4Source::new(source),
+        },
+    ));
 
     let body = format!("{}", route.destination());
 

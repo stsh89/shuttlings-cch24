@@ -1,5 +1,6 @@
 mod core;
 mod endpoints;
+mod solutions;
 
 use axum::{routing::get, Router};
 

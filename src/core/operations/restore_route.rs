@@ -1,5 +1,7 @@
-use crate::core::definitions::{Route, RouteFragment, RouteParameters};
-use std::net::Ipv4Addr;
+use crate::core::{
+    definitions::{Route, RouteV4Destination, RouteV4Key, RouteV4Source},
+    services::{NetworkService, RestoreRoute},
+};
 
 /// # Operation description
 ///
@@ -26,21 +28,42 @@ use std::net::Ipv4Addr;
 ///     10.0.0.0 + 1.2.3.255 = 11.2.3.255
 ///     128.128.33.0 + 255.0.255.33 = 127.128.32.33
 ///
+///
+/// Santa occasionally also wants to double check that the routing calculations are correct (reverses the calculation).
+///
+/// Expamples:
+///
+///    11.2.3.255 - 10.0.0.0 = 1.2.3.255
+///    127.128.32.33 - 128.128.33.0 = 255.0.255.33
+///
 /// See [challenge page](https://console.shuttle.dev/shuttlings/cch24/challenge/2) for details.
-pub struct CalculateRouteDestinationOperation {}
-
-pub struct CalculateRouteDestinationParameters {
-    pub source: Ipv4Addr,
-    pub key: Ipv4Addr,
+pub struct RestoreRouteOperation<T>
+where
+    T: NetworkService,
+{
+    pub network_service: T,
 }
 
-impl CalculateRouteDestinationOperation {
-    pub fn execute(&self, parameters: CalculateRouteDestinationParameters) -> Route {
-        let CalculateRouteDestinationParameters { source, key } = parameters;
+pub enum RouteFragment {
+    MissingV4Destination(MissingV4DestinationFragment),
+    Missingv4Key(MissingV4KeyFragment),
+}
 
-        Route::new(RouteParameters {
-            source,
-            fragment: RouteFragment::Key(key),
-        })
+pub struct MissingV4DestinationFragment {
+    pub key: RouteV4Key,
+    pub source: RouteV4Source,
+}
+
+pub struct MissingV4KeyFragment {
+    pub destination: RouteV4Destination,
+    pub source: RouteV4Source,
+}
+
+impl<T> RestoreRouteOperation<T>
+where
+    T: RestoreRoute,
+{
+    pub fn execute(&self, fragment: RouteFragment) -> Route {
+        self.network_service.restore_route(fragment)
     }
 }
