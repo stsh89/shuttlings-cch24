@@ -1,4 +1,4 @@
-use std::net::Ipv4Addr;
+use std::net::{Ipv4Addr, Ipv6Addr};
 
 pub fn add_v4_addresses(a: Ipv4Addr, b: Ipv4Addr) -> Ipv4Addr {
     let a = a.octets();
@@ -24,6 +24,26 @@ pub fn sub_v4_address(a: Ipv4Addr, b: Ipv4Addr) -> Ipv4Addr {
     )
 }
 
+pub fn xor_v6_addresses(a: Ipv6Addr, b: Ipv6Addr) -> Ipv6Addr {
+    let octets: Vec<u8> = a
+        .octets()
+        .iter()
+        .zip(b.octets())
+        .map(|(a, b)| a ^ b)
+        .collect();
+
+    Ipv6Addr::new(
+        ((octets[0] as u16) << 8) | octets[1] as u16,
+        ((octets[2] as u16) << 8) | octets[3] as u16,
+        ((octets[4] as u16) << 8) | octets[5] as u16,
+        ((octets[6] as u16) << 8) | octets[7] as u16,
+        ((octets[8] as u16) << 8) | octets[9] as u16,
+        ((octets[10] as u16) << 8) | octets[11] as u16,
+        ((octets[12] as u16) << 8) | octets[13] as u16,
+        ((octets[14] as u16) << 8) | octets[15] as u16,
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -34,8 +54,14 @@ mod tests {
         expected: Ipv4Addr,
     }
 
+    struct V6TestData {
+        a: Ipv6Addr,
+        b: Ipv6Addr,
+        expected: Ipv6Addr,
+    }
+
     #[test]
-    fn test_destination_math() {
+    fn test_add_v4_addresses() {
         let test_data = vec![
             V4TestData {
                 a: Ipv4Addr::new(10, 0, 0, 0),
@@ -63,7 +89,7 @@ mod tests {
     }
 
     #[test]
-    fn test_key_math() {
+    fn test_sub_v4_addresses() {
         let test_data = vec![
             V4TestData {
                 a: Ipv4Addr::new(11, 2, 3, 255),
@@ -85,6 +111,34 @@ mod tests {
             assert_eq!(
                 got, expected,
                 "{} - {}, expected: {}, got: {}",
+                a, b, expected, got
+            );
+        }
+    }
+
+    #[test]
+    fn test_xor_v6_addresses() {
+        let test_data = vec![
+            V6TestData {
+                a: "fe80::1".parse().unwrap(),
+                b: "5:6:7::3333".parse().unwrap(),
+                expected: "fe85:6:7::3332".parse().unwrap(),
+            },
+            V6TestData {
+                a: "5555:ffff:c:0:0:c:1234:5555".parse().unwrap(),
+                b: "aaaa::aaaa".parse().unwrap(),
+                expected: "ffff:ffff:c::c:1234:ffff".parse().unwrap(),
+            },
+        ];
+
+        for data in test_data {
+            let V6TestData { a, b, expected } = data;
+
+            let got = xor_v6_addresses(a, b);
+
+            assert_eq!(
+                got, expected,
+                "{} xor {}, expected: {}, got: {}",
                 a, b, expected, got
             );
         }

@@ -1,5 +1,8 @@
 use crate::core::{
-    definitions::{Route, RouteV4Destination, RouteV4Key, RouteV4Source},
+    definitions::{
+        Route, RouteV4Destination, RouteV4Key, RouteV4Source, RouteV6Destination, RouteV6Key,
+        RouteV6Source,
+    },
     services::{NetworkService, RestoreRoute},
 };
 
@@ -36,6 +39,11 @@ use crate::core::{
 ///    11.2.3.255 - 10.0.0.0 = 1.2.3.255
 ///    127.128.32.33 - 128.128.33.0 = 255.0.255.33
 ///
+/// To keep up with the times, Santa also wants to use this type of routing for
+/// IPv6 packets. He became a bit bored with elementary school math and decided
+/// that for IPv6 packets, the algorithm should use XOR instead of overflowing
+/// addition.
+///
 /// See [challenge page](https://console.shuttle.dev/shuttlings/cch24/challenge/2) for details.
 pub struct RestoreRouteOperation<T>
 where
@@ -47,6 +55,8 @@ where
 pub enum RouteFragment {
     MissingV4Destination(MissingV4DestinationFragment),
     Missingv4Key(MissingV4KeyFragment),
+    MissingV6Destination(MissingV6DestinationFragment),
+    Missingv6Key(MissingV6KeyFragment),
 }
 
 pub struct MissingV4DestinationFragment {
@@ -54,9 +64,19 @@ pub struct MissingV4DestinationFragment {
     pub source: RouteV4Source,
 }
 
+pub struct MissingV6DestinationFragment {
+    pub key: RouteV6Key,
+    pub source: RouteV6Source,
+}
+
 pub struct MissingV4KeyFragment {
     pub destination: RouteV4Destination,
     pub source: RouteV4Source,
+}
+
+pub struct MissingV6KeyFragment {
+    pub destination: RouteV6Destination,
+    pub source: RouteV6Source,
 }
 
 impl<T> RestoreRouteOperation<T>

@@ -16,21 +16,21 @@ pub struct GetDestinationAddressQueryParameters {
     key: String,
 }
 
-pub async fn get_route_destination(
+pub async fn get_v4_route_destination(
     query: Query<GetDestinationAddressQueryParameters>,
 ) -> EndpointResult<String> {
     let GetDestinationAddressQueryParameters { from, key } = query.0;
 
     let source: Ipv4Addr = from.parse().map_err(EndpointError::from).map_err(|err| {
         err.wrap_err(format!(
-            "Incorrect query parameter: from. Expected valid network address, got: {}",
+            "Incorrect query parameter: from. Expected valid IPv4 network address, got: {}",
             from
         ))
     })?;
 
     let key: Ipv4Addr = key.parse().map_err(EndpointError::from).map_err(|err| {
         err.wrap_err(format!(
-            "Incorrect query parameter: key. Expected valid network address, got: {}",
+            "Incorrect query parameter: key. Expected valid IPv4 network address, got: {}",
             key
         ))
     })?;

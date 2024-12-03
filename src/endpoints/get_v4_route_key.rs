@@ -16,7 +16,7 @@ pub struct GetDestinationAddressQueryParameters {
     to: String,
 }
 
-pub async fn get_route_key(
+pub async fn get_v4_route_key(
     query: Query<GetDestinationAddressQueryParameters>,
 ) -> EndpointResult<String> {
     let GetDestinationAddressQueryParameters { from, to } = query.0;
