@@ -8,6 +8,22 @@ pub enum Route {
     V6(RouteV6),
 }
 
+pub struct RouteV4 {
+    #[allow(dead_code)]
+    source: RouteV4Source,
+
+    key: RouteV4Key,
+    destination: RouteV4Destination,
+}
+
+pub struct RouteV6 {
+    #[allow(dead_code)]
+    source: RouteV6Source,
+
+    key: RouteV6Key,
+    destination: RouteV6Destination,
+}
+
 pub enum RouteParameters {
     V4(RouteV4Parameters),
     V6(RouteV6Parameters),
@@ -23,22 +39,6 @@ pub struct RouteV6Parameters {
     pub destination: RouteV6Destination,
     pub key: RouteV6Key,
     pub source: RouteV6Source,
-}
-
-pub struct RouteV4 {
-    #[allow(dead_code)]
-    source: RouteV4Source,
-
-    key: RouteV4Key,
-    destination: RouteV4Destination,
-}
-
-pub struct RouteV6 {
-    #[allow(dead_code)]
-    source: RouteV6Source,
-
-    key: RouteV6Key,
-    destination: RouteV6Destination,
 }
 
 #[derive(Copy, Clone)]
@@ -117,62 +117,62 @@ impl Route {
 }
 
 impl RouteV4Destination {
-    pub fn as_ipv4(&self) -> Ipv4Addr {
-        self.0
-    }
-
     pub fn new(destination: Ipv4Addr) -> Self {
         Self(destination)
+    }
+
+    pub fn octets(&self) -> [u8; 4] {
+        self.0.octets()
     }
 }
 
 impl RouteV6Destination {
-    pub fn as_ipv6(&self) -> Ipv6Addr {
-        self.0
-    }
-
     pub fn new(destination: Ipv6Addr) -> Self {
         Self(destination)
+    }
+
+    pub fn octets(&self) -> [u8; 16] {
+        self.0.octets()
     }
 }
 
 impl RouteV4Key {
-    pub fn as_ipv4(&self) -> Ipv4Addr {
-        self.0
-    }
-
     pub fn new(key: Ipv4Addr) -> Self {
         Self(key)
+    }
+
+    pub fn octets(&self) -> [u8; 4] {
+        self.0.octets()
     }
 }
 
 impl RouteV6Key {
-    pub fn as_ipv6(&self) -> Ipv6Addr {
-        self.0
-    }
-
     pub fn new(key: Ipv6Addr) -> Self {
         Self(key)
+    }
+
+    pub fn octets(&self) -> [u8; 16] {
+        self.0.octets()
     }
 }
 
 impl RouteV4Source {
-    pub fn as_ipv4(&self) -> Ipv4Addr {
-        self.0
-    }
-
     pub fn new(source: Ipv4Addr) -> Self {
         Self(source)
+    }
+
+    pub fn octets(&self) -> [u8; 4] {
+        self.0.octets()
     }
 }
 
 impl RouteV6Source {
-    pub fn as_ipv6(&self) -> Ipv6Addr {
-        self.0
-    }
-
     pub fn new(source: Ipv6Addr) -> Self {
         Self(source)
+    }
+
+    pub fn octets(&self) -> [u8; 16] {
+        self.0.octets()
     }
 }
 

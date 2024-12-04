@@ -100,10 +100,9 @@ where
         destination: RouteV4Destination,
     ) -> RouteV4Key {
         let octets: [u8; 4] = destination
-            .as_ipv4()
             .octets()
             .into_iter()
-            .zip(source.as_ipv4().octets())
+            .zip(source.octets())
             .map(|(a, b)| self.math.sub_with_overflow(a, b))
             .collect::<Vec<u8>>()
             .try_into()
@@ -118,10 +117,9 @@ where
         key: RouteV4Key,
     ) -> RouteV4Destination {
         let octets: [u8; 4] = source
-            .as_ipv4()
             .octets()
             .into_iter()
-            .zip(key.as_ipv4().octets())
+            .zip(key.octets())
             .map(|(a, b)| self.math.add_with_overflow(a, b))
             .collect::<Vec<u8>>()
             .try_into()
@@ -136,10 +134,9 @@ where
         destination: RouteV6Destination,
     ) -> RouteV6Key {
         let octets: [u8; 16] = destination
-            .as_ipv6()
             .octets()
             .into_iter()
-            .zip(source.as_ipv6().octets())
+            .zip(source.octets())
             .map(|(a, b)| self.math.xor(a, b))
             .collect::<Vec<u8>>()
             .try_into()
@@ -154,10 +151,9 @@ where
         key: RouteV6Key,
     ) -> RouteV6Destination {
         let octets: [u8; 16] = source
-            .as_ipv6()
             .octets()
             .into_iter()
-            .zip(key.as_ipv6().octets())
+            .zip(key.octets())
             .map(|(a, b)| self.math.xor(a, b))
             .collect::<Vec<u8>>()
             .try_into()
