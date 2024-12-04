@@ -4,9 +4,9 @@ use crate::{
         operations::{MissingV4KeyFragment, RestoreRouteOperation, RouteFragment},
     },
     endpoints::{EndpointError, EndpointResult},
-    solutions::BasicMathService,
+    AppState,
 };
-use axum::extract::Query;
+use axum::extract::{Query, State};
 use serde::Deserialize;
 use std::net::Ipv4Addr;
 
@@ -18,6 +18,7 @@ pub struct GetDestinationAddressQueryParameters {
 
 pub async fn get_v4_route_key(
     query: Query<GetDestinationAddressQueryParameters>,
+    State(state): State<AppState>,
 ) -> EndpointResult<String> {
     let GetDestinationAddressQueryParameters { from, to } = query.0;
 
@@ -36,7 +37,7 @@ pub async fn get_v4_route_key(
     })?;
 
     let route = RestoreRouteOperation {
-        math: &BasicMathService {},
+        math: state.math_service(),
     }
     .execute(RouteFragment::Missingv4Key(MissingV4KeyFragment {
         destination: RouteV4Destination::new(destination),
