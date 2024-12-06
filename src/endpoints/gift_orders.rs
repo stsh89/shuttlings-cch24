@@ -1,7 +1,7 @@
 use super::EndpointResult;
 use crate::{
     core::{
-        definitions::GiftOrder,
+        definitions::{Error as CoreError, GiftOrder},
         operations::{ExtractGiftOrdersOperation, ExtractGiftOrdersParameters},
     },
     endpoints::EndpointError,
@@ -39,7 +39,9 @@ struct ExtractGiftOrdersFromTextParameters {
 }
 
 enum ContentType {
+    Json,
     Toml,
+    Yaml,
 }
 
 fn execute_operation(parameters: OperationParameters) -> EndpointResult<String> {
@@ -50,8 +52,14 @@ fn execute_operation(parameters: OperationParameters) -> EndpointResult<String> 
     } = parameters;
 
     let gift_orders = match content_type {
+        ContentType::Json => {
+            extract_gift_orders_from_json(ExtractGiftOrdersFromTextParameters { state, text })
+        }
         ContentType::Toml => {
             extract_gift_orders_from_toml(ExtractGiftOrdersFromTextParameters { state, text })
+        }
+        ContentType::Yaml => {
+            extract_gift_orders_from_yaml(ExtractGiftOrdersFromTextParameters { state, text })
         }
     }?;
 
@@ -77,19 +85,49 @@ fn extract_gift_orders_from_toml(
         data_format_service: state.toml_service(),
     }
     .execute(ExtractGiftOrdersParameters { text })
-    .map_err(|err| {
-        if err.is_corrupted_data_format() {
-            return EndpointError::bad_request(err.report().wrap_err("Invalid manifest"));
-        }
-
-        if err.is_missing_keyword() {
-            return EndpointError::bad_request(err.report().wrap_err("Magic keyword not provided"));
-        }
-
-        EndpointError::internal(err.report())
-    })?;
+    .map_err(from_core_error)?;
 
     Ok(gift_ordes)
+}
+
+fn extract_gift_orders_from_json(
+    parameters: ExtractGiftOrdersFromTextParameters,
+) -> EndpointResult<Vec<GiftOrder>> {
+    let ExtractGiftOrdersFromTextParameters { state, text } = parameters;
+
+    let gift_ordes = ExtractGiftOrdersOperation {
+        data_format_service: state.json_service(),
+    }
+    .execute(ExtractGiftOrdersParameters { text })
+    .map_err(from_core_error)?;
+
+    Ok(gift_ordes)
+}
+
+fn extract_gift_orders_from_yaml(
+    parameters: ExtractGiftOrdersFromTextParameters,
+) -> EndpointResult<Vec<GiftOrder>> {
+    let ExtractGiftOrdersFromTextParameters { state, text } = parameters;
+
+    let gift_ordes = ExtractGiftOrdersOperation {
+        data_format_service: state.yaml_service(),
+    }
+    .execute(ExtractGiftOrdersParameters { text })
+    .map_err(from_core_error)?;
+
+    Ok(gift_ordes)
+}
+
+fn from_core_error(err: CoreError) -> EndpointError {
+    if err.is_corrupted_data_format() {
+        return EndpointError::bad_request(err.report().wrap_err("Invalid manifest"));
+    }
+
+    if err.is_missing_keyword() {
+        return EndpointError::bad_request(err.report().wrap_err("Magic keyword not provided"));
+    }
+
+    EndpointError::internal(err.report())
 }
 
 async fn parse_body(req: Request) -> EndpointResult<String> {
@@ -113,8 +151,16 @@ fn parse_content_type(req: &Request) -> EndpointResult<ContentType> {
         .map_err(Report::new)
         .map_err(EndpointError::internal)?;
 
+    if content_type.starts_with("application/json") {
+        return Ok(ContentType::Json);
+    }
+
     if content_type.starts_with("application/toml") {
         return Ok(ContentType::Toml);
+    }
+
+    if content_type.starts_with("application/yaml") {
+        return Ok(ContentType::Yaml);
     }
 
     Err(EndpointError::unsupported_media_type(eyre!(

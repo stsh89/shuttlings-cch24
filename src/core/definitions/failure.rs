@@ -1,10 +1,13 @@
 use eyre::Report;
 
+#[derive(Debug, thiserror::Error)]
+#[error("{report}")]
 pub struct Error {
     kind: ErrorKind,
     report: Report,
 }
 
+#[derive(Debug)]
 enum ErrorKind {
     CorruptedDataFormat,
     MissingKeyword,
