@@ -1,5 +1,4 @@
 use std::net::AddrParseError;
-
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
@@ -16,6 +15,9 @@ pub struct EndpointError {
 #[derive(Debug)]
 pub enum EndpointErrorKind {
     BadRequest,
+    UnsupportedMediaType,
+    NoContent,
+    Internal,
 }
 
 impl EndpointError {
@@ -23,6 +25,27 @@ impl EndpointError {
         Self {
             kind: EndpointErrorKind::BadRequest,
             report,
+        }
+    }
+
+    pub fn internal(report: Error) -> Self {
+        Self {
+            kind: EndpointErrorKind::Internal,
+            report,
+        }
+    }
+
+    pub fn no_content() -> Self {
+        Self {
+            kind: EndpointErrorKind::NoContent,
+            report: Error::msg(""),
+        }
+    }
+
+    pub fn unsupported_media_type(report: Error) -> Self {
+        Self {
+            kind: EndpointErrorKind::UnsupportedMediaType,
+            report
         }
     }
 
@@ -36,12 +59,15 @@ impl EndpointError {
 
 impl IntoResponse for EndpointError {
     fn into_response(self) -> Response {
+        use EndpointErrorKind as Kind;
+
         let Self { kind, report } = self;
 
         match kind {
-            EndpointErrorKind::BadRequest => {
-                (StatusCode::BAD_REQUEST, report.to_string()).into_response()
-            }
+            Kind::BadRequest => (StatusCode::BAD_REQUEST, report.to_string()).into_response(),
+            Kind::UnsupportedMediaType => StatusCode::UNSUPPORTED_MEDIA_TYPE.into_response(),
+            Kind::NoContent => StatusCode::NO_CONTENT.into_response(),
+            Kind::Internal => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
     }
 }
