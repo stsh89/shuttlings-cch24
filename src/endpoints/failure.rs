@@ -1,9 +1,9 @@
-use std::net::AddrParseError;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
 use eyre::Error;
+use std::net::AddrParseError;
 
 #[derive(Debug, thiserror::Error)]
 #[error("{report}")]
@@ -45,7 +45,7 @@ impl EndpointError {
     pub fn unsupported_media_type(report: Error) -> Self {
         Self {
             kind: EndpointErrorKind::UnsupportedMediaType,
-            report
+            report,
         }
     }
 

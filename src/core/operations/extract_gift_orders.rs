@@ -1,4 +1,7 @@
-use crate::core::{definitions::GiftOrder, services::ExtractGiftOrders};
+use crate::core::{
+    definitions::{Error, GiftOrder},
+    services::ExtractGiftOrders,
+};
 
 /// Ho ho ho! Santa's got his hands full this year with the grand Christmas
 /// present delivery! He's all set to send out orders to his trusty warehouse at
@@ -41,7 +44,10 @@ impl<'a, T> ExtractGiftOrdersOperation<'a, T>
 where
     T: ExtractGiftOrders,
 {
-    pub fn execute(&self, parameters: ExtractGiftOrdersParameters) -> Vec<GiftOrder> {
+    pub fn execute(
+        &self,
+        parameters: ExtractGiftOrdersParameters,
+    ) -> Result<Vec<GiftOrder>, Error> {
         let ExtractGiftOrdersParameters { text } = parameters;
 
         self.data_format_service.extract_gift_orders(text)

@@ -2,7 +2,10 @@ mod core;
 mod endpoints;
 mod solutions;
 
-use axum::{routing::{get, post}, Router};
+use axum::{
+    routing::{get, post},
+    Router,
+};
 use solutions::{BasicMathService, TomlService};
 use std::sync::Arc;
 

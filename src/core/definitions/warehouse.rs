@@ -2,12 +2,12 @@ use std::num::NonZeroU32;
 
 pub struct GiftOrder {
     item: String,
-    quantity: NonZeroU32
+    quantity: NonZeroU32,
 }
 
 pub struct GiftOrderParameters {
     pub item: String,
-    pub quantity: NonZeroU32
+    pub quantity: NonZeroU32,
 }
 
 impl GiftOrder {
@@ -18,10 +18,7 @@ impl GiftOrder {
     pub fn new(parameters: GiftOrderParameters) -> Self {
         let GiftOrderParameters { item, quantity } = parameters;
 
-        GiftOrder {
-            item,
-            quantity
-        }
+        GiftOrder { item, quantity }
     }
 
     pub fn quantity(&self) -> NonZeroU32 {

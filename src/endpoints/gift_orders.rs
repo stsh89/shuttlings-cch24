@@ -53,7 +53,7 @@ fn execute_operation(parameters: OperationParameters) -> EndpointResult<String> 
         ContentType::Toml => {
             extract_gift_orders_from_toml(ExtractGiftOrdersFromTextParameters { state, text })
         }
-    };
+    }?;
 
     if gift_orders.is_empty() {
         return Err(EndpointError::no_content());
@@ -70,13 +70,26 @@ fn execute_operation(parameters: OperationParameters) -> EndpointResult<String> 
 
 fn extract_gift_orders_from_toml(
     parameters: ExtractGiftOrdersFromTextParameters,
-) -> Vec<GiftOrder> {
+) -> EndpointResult<Vec<GiftOrder>> {
     let ExtractGiftOrdersFromTextParameters { state, text } = parameters;
 
-    ExtractGiftOrdersOperation {
+    let gift_ordes = ExtractGiftOrdersOperation {
         data_format_service: state.toml_service(),
     }
     .execute(ExtractGiftOrdersParameters { text })
+    .map_err(|err| {
+        if err.is_corrupted_data_format() {
+            return EndpointError::bad_request(err.report().wrap_err("Invalid manifest"));
+        }
+
+        if err.is_missing_keyword() {
+            return EndpointError::bad_request(err.report().wrap_err("Magic keyword not provided"));
+        }
+
+        EndpointError::internal(err.report())
+    })?;
+
+    Ok(gift_ordes)
 }
 
 async fn parse_body(req: Request) -> EndpointResult<String> {
@@ -104,8 +117,8 @@ fn parse_content_type(req: &Request) -> EndpointResult<ContentType> {
         return Ok(ContentType::Toml);
     }
 
-    return Err(EndpointError::unsupported_media_type(eyre!(
+    Err(EndpointError::unsupported_media_type(eyre!(
         "Unsupported media type. Expected: application/toml, got: {}",
         content_type
-    )));
+    )))
 }
