@@ -1,7 +1,7 @@
-use crate::core::definitions::{Error, GiftOrder};
+use crate::core::definitions::{Error, Manifest};
 
 pub trait DataFormatService {}
 
-pub trait ExtractGiftOrders: DataFormatService {
-    fn extract_gift_orders(&self, text: String) -> Result<Vec<GiftOrder>, Error>;
+pub trait GetManifest: DataFormatService {
+    fn get_manifest(&self, text: String) -> Result<Manifest, Error>;
 }

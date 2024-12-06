@@ -1,5 +1,7 @@
 use std::num::NonZeroU32;
 
+pub use cargo_manifest::Manifest;
+
 pub struct GiftOrder {
     item: String,
     quantity: NonZeroU32,
