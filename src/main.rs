@@ -31,6 +31,7 @@ async fn main() -> shuttle_axum::ShuttleAxum {
         .route("/2/v6/dest", get(endpoints::get_v6_route_destination))
         .route("/2/v6/key", get(endpoints::get_v6_route_key))
         .route("/5/manifest", post(endpoints::gift_orders))
+        .route("/9/milk", post(endpoints::milk))
         .with_state(state);
 
     Ok(router.into())
