@@ -3,10 +3,14 @@ use crate::{
     core::{definitions::Milk, operations::GetMilkOperation},
     AppState,
 };
-use axum::extract::{Request, State};
+use axum::{
+    extract::{Request, State},
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 use chrono::Utc;
 
-pub async fn milk(State(state): State<AppState>, _req: Request) -> EndpointResult<String> {
+pub async fn milk(State(state): State<AppState>, _req: Request) -> EndpointResult<Response> {
     println!("{}", Utc::now());
 
     let milk = GetMilkOperation {
@@ -14,15 +18,17 @@ pub async fn milk(State(state): State<AppState>, _req: Request) -> EndpointResul
     }
     .execute();
 
-    let body = body(milk);
-
-    Ok(body)
+    response(milk)
 }
 
-fn body(milk: Option<Milk>) -> String {
+fn response(milk: Option<Milk>) -> EndpointResult<Response> {
     let Some(_milk) = milk else {
-        return "No milk available\n".to_string();
+        return Ok((
+            StatusCode::TOO_MANY_REQUESTS,
+            "No milk available\n".to_string(),
+        )
+            .into_response());
     };
 
-    "Milk withdrawn\n".to_string()
+    Ok((StatusCode::OK, "Milk withdrawn\n".to_string()).into_response())
 }
