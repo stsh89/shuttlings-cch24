@@ -4,7 +4,7 @@
 
 ## Day 9: The Cookies and Milk Factory
 
-Test script:
+PowerShell Test script:
 
 ```powershell
 $jobs = 1..20 | ForEach-Object {Start-Job -ScriptBlock {curl --silent -X POST http://localhost:8000/9/milk}}
