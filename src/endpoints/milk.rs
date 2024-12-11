@@ -29,11 +29,18 @@ enum UnitConversionRequest {
 
     #[serde(rename = "gallons")]
     GallonsToLiters(f32),
+
+    #[serde(rename = "litres")]
+    LitersToPints(f32),
+
+    #[serde(rename = "pints")]
+    PintsToLiters(f32),
 }
 
 enum Unit {
     Liters,
     Gallons,
+    Pints,
 }
 
 enum ContentType {
@@ -63,6 +70,7 @@ pub async fn milk(State(state): State<AppState>, req: Request) -> EndpointResult
             let volumen = match from {
                 Unit::Liters => MilkVolume::Liters(value),
                 Unit::Gallons => MilkVolume::Gallons(value),
+                Unit::Pints => MilkVolume::Pints(value),
             };
 
             let milk = Milk::new(volumen);
@@ -70,6 +78,7 @@ pub async fn milk(State(state): State<AppState>, req: Request) -> EndpointResult
             match to {
                 Unit::Liters => serde_json::json!({"liters": milk.liters()}).to_string(),
                 Unit::Gallons => serde_json::json!({"gallons": milk.gallons()}).to_string(),
+                Unit::Pints => serde_json::json!({"pints": milk.pints()}).to_string(),
             }
         }
     };
@@ -102,6 +111,20 @@ impl RequestKind {
                     UnitConversionRequest::GallonsToLiters(value) => {
                         Ok(RequestKind::UnitConversion {
                             from: Unit::Gallons,
+                            to: Unit::Liters,
+                            value,
+                        })
+                    }
+                    UnitConversionRequest::LitersToPints(value) => {
+                        Ok(RequestKind::UnitConversion {
+                            from: Unit::Liters,
+                            to: Unit::Pints,
+                            value,
+                        })
+                    }
+                    UnitConversionRequest::PintsToLiters(value) => {
+                        Ok(RequestKind::UnitConversion {
+                            from: Unit::Pints,
                             to: Unit::Liters,
                             value,
                         })
