@@ -28,6 +28,7 @@ async fn main() -> shuttle_axum::ShuttleAxum {
         .route("/2/v6/key", get(endpoints::get_v6_route_key))
         .route("/5/manifest", post(endpoints::gift_orders))
         .route("/9/milk", post(endpoints::milk))
+        .route("/9/refill", post(endpoints::refill_milk))
         .with_state(state);
 
     Ok(router.into())
@@ -61,5 +62,9 @@ impl AppState {
 
     fn yaml_service(&self) -> &YamlService {
         &self.yaml_service
+    }
+
+    fn reload_rate_limit_service(&mut self) {
+        self.rate_limit_service = Arc::new(RateLimiter::new());
     }
 }

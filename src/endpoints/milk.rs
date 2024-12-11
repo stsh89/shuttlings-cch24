@@ -47,6 +47,15 @@ enum ContentType {
     Json,
 }
 
+pub async fn refill_milk(
+    State(mut state): State<AppState>,
+    _req: Request,
+) -> EndpointResult<Response> {
+    state.reload_rate_limit_service();
+
+    Ok(StatusCode::OK.into_response())
+}
+
 pub async fn milk(State(state): State<AppState>, req: Request) -> EndpointResult<Response> {
     println!("{}", Utc::now());
 
