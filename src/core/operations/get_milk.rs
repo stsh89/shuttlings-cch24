@@ -1,4 +1,7 @@
-use crate::core::{definitions::Error, services::TryAcquire};
+use crate::core::{
+    definitions::Error,
+    services::{RateLimitService, TryAcquire},
+};
 
 /// Wanting to spread the joy of sweet treats beyond the holidays, Santa let
 /// build a wondrous factory to mass produce the perfect treat duo: cookies and
@@ -23,7 +26,10 @@ use crate::core::{definitions::Error, services::TryAcquire};
 /// available\n.
 ///
 /// See [challenge page](https://console.shuttle.dev/shuttlings/cch24/challenge/9) for details.
-pub struct GetMilkOperation<'a, T> {
+pub struct GetMilkOperation<'a, T>
+where
+    T: RateLimitService,
+{
     pub rate_limit_service: &'a T,
 }
 
