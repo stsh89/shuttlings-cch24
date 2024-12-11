@@ -1,4 +1,7 @@
-use crate::core::{definitions::Milk, services::TryAcquire};
+use crate::core::{
+    definitions::{Error, Milk, MilkVolume},
+    services::TryAcquire,
+};
 
 /// Wanting to spread the joy of sweet treats beyond the holidays, Santa let
 /// build a wondrous factory to mass produce the perfect treat duo: cookies and
@@ -27,15 +30,21 @@ pub struct GetMilkOperation<'a, T> {
     pub rate_limit_service: &'a T,
 }
 
+pub struct GetMilkParameters {
+    pub volume: MilkVolume,
+}
+
 impl<'a, T> GetMilkOperation<'a, T>
 where
     T: TryAcquire,
 {
-    pub fn execute(&self) -> Option<Milk> {
-        if self.rate_limit_service.try_acquire() {
-            return Some(Milk::new());
+    pub fn execute(&self, parameters: GetMilkParameters) -> Result<Milk, Error> {
+        let GetMilkParameters { volume } = parameters;
+
+        if !self.rate_limit_service.try_acquire() {
+            return Err(Error::rate_limited());
         }
 
-        None
+        Ok(Milk::new(volume))
     }
 }

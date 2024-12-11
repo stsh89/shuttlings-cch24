@@ -18,6 +18,7 @@ pub enum EndpointErrorKind {
     UnsupportedMediaType,
     NoContent,
     Internal,
+    TooManyRequests,
 }
 
 impl EndpointError {
@@ -39,6 +40,13 @@ impl EndpointError {
         Self {
             kind: EndpointErrorKind::NoContent,
             report: Error::msg(""),
+        }
+    }
+
+    pub fn too_many_requests(report: Error) -> Self {
+        Self {
+            kind: EndpointErrorKind::TooManyRequests,
+            report,
         }
     }
 
@@ -68,6 +76,9 @@ impl IntoResponse for EndpointError {
             Kind::UnsupportedMediaType => StatusCode::UNSUPPORTED_MEDIA_TYPE.into_response(),
             Kind::NoContent => StatusCode::NO_CONTENT.into_response(),
             Kind::Internal => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Kind::TooManyRequests => {
+                (StatusCode::TOO_MANY_REQUESTS, report.to_string()).into_response()
+            }
         }
     }
 }

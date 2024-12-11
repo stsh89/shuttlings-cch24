@@ -11,9 +11,14 @@ pub struct Error {
 enum ErrorKind {
     CorruptedDataFormat,
     MissingKeyword,
+    RateLimited,
 }
 
 impl Error {
+    pub fn is_rate_limited(&self) -> bool {
+        matches!(self.kind, ErrorKind::RateLimited)
+    }
+
     pub fn is_corrupted_data_format(&self) -> bool {
         matches!(self.kind, ErrorKind::CorruptedDataFormat)
     }
@@ -32,6 +37,13 @@ impl Error {
     pub fn missing_keyword() -> Self {
         Self {
             kind: ErrorKind::MissingKeyword,
+            report: Report::msg(""),
+        }
+    }
+
+    pub fn rate_limited() -> Self {
+        Self {
+            kind: ErrorKind::RateLimited,
             report: Report::msg(""),
         }
     }
