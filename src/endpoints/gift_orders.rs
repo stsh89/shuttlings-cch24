@@ -22,7 +22,8 @@ pub async fn gift_orders(State(state): State<AppState>, req: Request) -> Endpoin
         state,
         content_type,
         text,
-    })?;
+    })
+    .await?;
 
     Ok(response_body)
 }
@@ -44,7 +45,7 @@ enum ContentType {
     Yaml,
 }
 
-fn execute_operation(parameters: OperationParameters) -> EndpointResult<String> {
+async fn execute_operation(parameters: OperationParameters) -> EndpointResult<String> {
     let OperationParameters {
         content_type,
         state,
@@ -53,13 +54,13 @@ fn execute_operation(parameters: OperationParameters) -> EndpointResult<String> 
 
     let gift_orders = match content_type {
         ContentType::Json => {
-            extract_gift_orders_from_json(ExtractGiftOrdersFromTextParameters { state, text })
+            extract_gift_orders_from_json(ExtractGiftOrdersFromTextParameters { state, text }).await
         }
         ContentType::Toml => {
-            extract_gift_orders_from_toml(ExtractGiftOrdersFromTextParameters { state, text })
+            extract_gift_orders_from_toml(ExtractGiftOrdersFromTextParameters { state, text }).await
         }
         ContentType::Yaml => {
-            extract_gift_orders_from_yaml(ExtractGiftOrdersFromTextParameters { state, text })
+            extract_gift_orders_from_yaml(ExtractGiftOrdersFromTextParameters { state, text }).await
         }
     }?;
 
@@ -76,13 +77,13 @@ fn execute_operation(parameters: OperationParameters) -> EndpointResult<String> 
     Ok(body)
 }
 
-fn extract_gift_orders_from_toml(
+async fn extract_gift_orders_from_toml(
     parameters: ExtractGiftOrdersFromTextParameters,
 ) -> EndpointResult<Vec<GiftOrder>> {
     let ExtractGiftOrdersFromTextParameters { state, text } = parameters;
 
     let gift_ordes = ExtractGiftOrdersOperation {
-        data_format_service: state.toml_service(),
+        data_format_service: state.read().await.toml_service(),
     }
     .execute(ExtractGiftOrdersParameters { text })
     .map_err(from_core_error)?;
@@ -90,13 +91,13 @@ fn extract_gift_orders_from_toml(
     Ok(gift_ordes)
 }
 
-fn extract_gift_orders_from_json(
+async fn extract_gift_orders_from_json(
     parameters: ExtractGiftOrdersFromTextParameters,
 ) -> EndpointResult<Vec<GiftOrder>> {
     let ExtractGiftOrdersFromTextParameters { state, text } = parameters;
 
     let gift_ordes = ExtractGiftOrdersOperation {
-        data_format_service: state.json_service(),
+        data_format_service: state.read().await.json_service(),
     }
     .execute(ExtractGiftOrdersParameters { text })
     .map_err(from_core_error)?;
@@ -104,13 +105,13 @@ fn extract_gift_orders_from_json(
     Ok(gift_ordes)
 }
 
-fn extract_gift_orders_from_yaml(
+async fn extract_gift_orders_from_yaml(
     parameters: ExtractGiftOrdersFromTextParameters,
 ) -> EndpointResult<Vec<GiftOrder>> {
     let ExtractGiftOrdersFromTextParameters { state, text } = parameters;
 
     let gift_ordes = ExtractGiftOrdersOperation {
-        data_format_service: state.yaml_service(),
+        data_format_service: state.read().await.yaml_service(),
     }
     .execute(ExtractGiftOrdersParameters { text })
     .map_err(from_core_error)?;

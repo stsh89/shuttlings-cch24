@@ -47,11 +47,8 @@ enum ContentType {
     Json,
 }
 
-pub async fn refill_milk(
-    State(mut state): State<AppState>,
-    _req: Request,
-) -> EndpointResult<Response> {
-    state.reload_rate_limit_service();
+pub async fn refill_milk(State(state): State<AppState>, _req: Request) -> EndpointResult<Response> {
+    state.write().await.reload_rate_limit_service();
 
     Ok(StatusCode::OK.into_response())
 }
@@ -60,7 +57,7 @@ pub async fn milk(State(state): State<AppState>, req: Request) -> EndpointResult
     println!("{}", Utc::now());
 
     GetMilkOperation {
-        rate_limit_service: state.rate_limit_service(),
+        rate_limit_service: state.read().await.rate_limit_service(),
     }
     .execute()
     .map_err(|err| {

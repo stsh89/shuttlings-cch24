@@ -37,7 +37,7 @@ pub async fn get_v4_route_destination(
     })?;
 
     let route = RestoreRouteOperation {
-        math: state.math_service(),
+        math: state.read().await.math_service(),
     }
     .execute(RouteFragment::MissingV4Destination(
         MissingV4DestinationFragment {

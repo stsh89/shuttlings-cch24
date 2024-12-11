@@ -37,7 +37,7 @@ pub async fn get_v6_route_key(
     })?;
 
     let route = RestoreRouteOperation {
-        math: state.math_service(),
+        math: state.read().await.math_service(),
     }
     .execute(RouteFragment::Missingv6Key(MissingV6KeyFragment {
         destination: RouteV6Destination::new(destination),

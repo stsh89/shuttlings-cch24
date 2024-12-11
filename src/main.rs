@@ -8,16 +8,19 @@ use axum::{
 };
 use solutions::{BasicMathService, JsonService, RateLimiter, TomlService, YamlService};
 use std::sync::Arc;
+use tokio::sync::RwLock;
+
+type AppState = Arc<RwLock<InnerAppState>>;
 
 #[shuttle_runtime::main]
 async fn main() -> shuttle_axum::ShuttleAxum {
-    let state = AppState {
+    let state = Arc::new(RwLock::new(InnerAppState {
         json_service: Arc::new(JsonService {}),
         math_service: Arc::new(BasicMathService {}),
         toml_service: Arc::new(TomlService {}),
         yaml_service: Arc::new(YamlService {}),
         rate_limit_service: Arc::new(RateLimiter::new()),
-    };
+    }));
 
     let router = Router::new()
         .route("/", get(endpoints::hello_bird))
@@ -35,7 +38,7 @@ async fn main() -> shuttle_axum::ShuttleAxum {
 }
 
 #[derive(Clone)]
-struct AppState {
+struct InnerAppState {
     math_service: Arc<BasicMathService>,
     toml_service: Arc<TomlService>,
     json_service: Arc<JsonService>,
@@ -43,7 +46,7 @@ struct AppState {
     rate_limit_service: Arc<RateLimiter>,
 }
 
-impl AppState {
+impl InnerAppState {
     fn json_service(&self) -> &JsonService {
         &self.json_service
     }

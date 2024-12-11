@@ -37,7 +37,7 @@ pub async fn get_v4_route_key(
     })?;
 
     let route = RestoreRouteOperation {
-        math: state.math_service(),
+        math: state.read().await.math_service(),
     }
     .execute(RouteFragment::Missingv4Key(MissingV4KeyFragment {
         destination: RouteV4Destination::new(destination),
