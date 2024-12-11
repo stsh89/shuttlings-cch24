@@ -76,7 +76,17 @@ pub async fn milk(State(state): State<AppState>, req: Request) -> EndpointResult
             let milk = Milk::new(volumen);
 
             match to {
-                Unit::Liters => serde_json::json!({"liters": milk.liters()}).to_string(),
+                Unit::Liters => {
+                    if matches!(from, Unit::Pints) {
+                        serde_json::json!({"litres": milk.liters()}).to_string()
+                    } else if matches!(from, Unit::Gallons) {
+                        serde_json::json!({"liters": milk.liters()}).to_string()
+                    } else {
+                        return Err(EndpointError::internal(Report::msg(
+                            "Confusing conversion rules with obfuscated one letter diff names",
+                        )));
+                    }
+                }
                 Unit::Gallons => serde_json::json!({"gallons": milk.gallons()}).to_string(),
                 Unit::Pints => serde_json::json!({"pints": milk.pints()}).to_string(),
             }
