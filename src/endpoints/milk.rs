@@ -1,8 +1,8 @@
 use super::EndpointResult;
 use crate::{
     core::{
-        definitions::MilkVolume,
-        operations::{GetMilkOperation, GetMilkParameters},
+        definitions::{Milk, MilkVolume},
+        operations::GetMilkOperation,
     },
     endpoints::EndpointError,
     AppState,
@@ -43,20 +43,10 @@ enum ContentType {
 pub async fn milk(State(state): State<AppState>, req: Request) -> EndpointResult<Response> {
     println!("{}", Utc::now());
 
-    let request_kind = RequestKind::try_from_request(req).await?;
-
-    let volume = match &request_kind {
-        RequestKind::Withdrawal => MilkVolume::Liters(1.0),
-        RequestKind::UnitConversion { from, value, .. } => match from {
-            Unit::Liters => MilkVolume::Liters(*value),
-            Unit::Gallons => MilkVolume::Gallons(*value),
-        },
-    };
-
-    let milk = GetMilkOperation {
+    GetMilkOperation {
         rate_limit_service: state.rate_limit_service(),
     }
-    .execute(GetMilkParameters { volume })
+    .execute()
     .map_err(|err| {
         if err.is_rate_limited() {
             return EndpointError::too_many_requests(Report::msg("No milk available\n"));
@@ -65,12 +55,23 @@ pub async fn milk(State(state): State<AppState>, req: Request) -> EndpointResult
         EndpointError::internal(Report::new(err))
     })?;
 
+    let request_kind = RequestKind::try_from_request(req).await?;
+
     let body = match request_kind {
         RequestKind::Withdrawal => "Milk withdrawn\n".to_string(),
-        RequestKind::UnitConversion { to, .. } => match to {
-            Unit::Liters => serde_json::json!({"liters": milk.liters()}).to_string(),
-            Unit::Gallons => serde_json::json!({"gallons": milk.gallons()}).to_string(),
-        },
+        RequestKind::UnitConversion { to, from, value } => {
+            let volumen = match from {
+                Unit::Liters => MilkVolume::Liters(value),
+                Unit::Gallons => MilkVolume::Gallons(value),
+            };
+
+            let milk = Milk::new(volumen);
+
+            match to {
+                Unit::Liters => serde_json::json!({"liters": milk.liters()}).to_string(),
+                Unit::Gallons => serde_json::json!({"gallons": milk.gallons()}).to_string(),
+            }
+        }
     };
 
     Ok((StatusCode::OK, body).into_response())
